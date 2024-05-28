@@ -4,10 +4,15 @@ import { AppService } from './app.service'
 import { ADSBModule } from './adsb/adsb.module'
 import { MongooseModule } from '@nestjs/mongoose'
 import { ConfigModule } from '@nestjs/config'
+import { AirspaceModule } from './airspace/airspace.module'
 
-// , MongooseModule.forRoot(process.env.MONGO_URI)
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), ADSBModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(process.env.MONGO_URI),
+    ADSBModule,
+    AirspaceModule
+  ],
   controllers: [AppController],
   providers: [AppService]
 })
