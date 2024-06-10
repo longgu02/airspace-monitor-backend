@@ -13,10 +13,16 @@ export class Airspace {
   // coordinate: Array<[number, number]>
 
   @Prop()
-  lat: number
+  latMin: number
 
   @Prop()
-  lon: number
+  lonMin: number
+
+  @Prop()
+  latMax: number
+
+  @Prop()
+  lonMax: number
 
   @Prop()
   rad: number

@@ -7,13 +7,21 @@ export class AirspaceDto {
 
   @IsNotEmpty()
   @IsNumber()
-  lat: number
+  latMin: number
 
   @IsNotEmpty()
   @IsNumber()
-  lon: number
+  lonMin: number
 
   @IsNotEmpty()
   @IsNumber()
-  rad: number
+  latMax: number
+
+  @IsNotEmpty()
+  @IsNumber()
+  lonMax: number
+
+  // @IsNotEmpty()
+  // @IsNumber()
+  // rad: number
 }

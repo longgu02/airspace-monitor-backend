@@ -6,7 +6,13 @@ import { InjectModel } from '@nestjs/mongoose'
 @Injectable()
 export class AirspaceService {
   constructor(@InjectModel(Airspace.name) private airspaceModel: Model<Airspace>) {}
-  async createAirspace(name: string, lat: number, lon: number, rad: number) {
+
+  async getAllAirspace() {
+    const airspaces = await this.airspaceModel.find({})
+    return airspaces
+  }
+
+  async createAirspace(name: string, latMin: number, lonMin: number, latMax: number, lonMax: number) {
     // if(type == "circle" && coordinates.length == 1){
     //   const newAirspace = new this.airspaceModel({
     //     name: name,
@@ -17,9 +23,11 @@ export class AirspaceService {
 
     const newAirspace = new this.airspaceModel({
       name: name,
-      lat: lat,
-      lon: lon,
-      rad: rad
+      latMin: latMin,
+      lonMin: lonMin,
+      latMax: latMax,
+      lonMax: lonMax
+      // rad: rad
     })
 
     await newAirspace.save()

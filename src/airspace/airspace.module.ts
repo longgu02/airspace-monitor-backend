@@ -8,6 +8,6 @@ import { Airspace, AirspaceSchema } from './schema/airspace.schema'
   imports: [MongooseModule.forFeature([{ name: Airspace.name, schema: AirspaceSchema }])],
   controllers: [AirspaceController],
   providers: [AirspaceService],
-  exports: []
+  exports: [AirspaceService]
 })
 export class AirspaceModule {}

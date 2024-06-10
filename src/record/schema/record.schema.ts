@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
-import { HydratedDocument } from 'mongoose'
+import mongoose, { HydratedDocument } from 'mongoose'
 
 export type AccountDocument = HydratedDocument<Record>
 
@@ -7,19 +7,31 @@ export type AccountDocument = HydratedDocument<Record>
 @Schema()
 export class Record {
   @Prop()
-  hex: string
+  icao24: string
 
   @Prop()
-  registration: number
+  callsign: string
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Airspace' })
+  airspace: string
 
   @Prop()
-  type: number
+  origin_country: string
+
+  // @Prop()
+  // flight: string
 
   @Prop()
-  flight: number
+  entryDate: Date
 
   @Prop()
-  coordinate: Array<[number, number]>
+  exitDate: Date
+
+  @Prop()
+  lastHeading: number
+
+  @Prop()
+  coordinates: Array<[number, number]>
 }
 
 export const RecordSchema = SchemaFactory.createForClass(Record)

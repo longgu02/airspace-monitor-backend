@@ -34,7 +34,7 @@ export class AppService {
     // .then((data) => console.log(data))
     // .catch((error) => console.error('Error:', error));
 
-    // return res.json();
-    return process.env.MONGO_URI
+    return res.json()
+    // return process.env.MONGO_URI
   }
 }

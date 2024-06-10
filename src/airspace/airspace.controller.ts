@@ -6,6 +6,11 @@ import { AirspaceDto } from './dto/airspace.dto'
 export class AirspaceController {
   constructor(private readonly airspaceService: AirspaceService) {}
 
+  @Get('/')
+  async getAllAirspace() {
+    return await this.airspaceService.getAllAirspace()
+  }
+
   @Get('/:id')
   async getAirspace(@Param('id') id: string) {
     return await this.airspaceService.getAirspace(id)
@@ -15,9 +20,10 @@ export class AirspaceController {
   async createAirspace(@Body() airspaceDto: AirspaceDto) {
     return await this.airspaceService.createAirspace(
       airspaceDto.name,
-      airspaceDto.lat,
-      airspaceDto.lon,
-      airspaceDto.rad
+      airspaceDto.latMin,
+      airspaceDto.lonMin,
+      airspaceDto.latMax,
+      airspaceDto.lonMax
     )
   }
 }
