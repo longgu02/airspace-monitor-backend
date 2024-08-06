@@ -164,6 +164,50 @@ export class ADSBService {
     // return data['ac']
   }
 
+  async getAircraftRoute(icao24: string, unixDate: number) {
+    const res = await fetch(
+      // 'https://opensky-network.org/api/states/all?extended=1&lamin=-85.05112900000009&lomin=-203.04088594010116&lamax=85.05112877980659&lomax=181.73644745141752',
+      // 'https://opensky-network.org/api/flights/all?begin=1517184000&end=1517270400',
+      // 'https://opensky-network.org/api/states/all',
+      `https://opensky-network.org/api/tracks/all?icao24=${icao24}&time=${unixDate}`,
+      // `https://opensky-network.org/api/states/all?lamin=${matchedAirspaceId.latMin}&lomin=${matchedAirspaceId.lonMin}&lamax=${matchedAirspaceId.latMax}&lomax=${matchedAirspaceId.lonMax}`,
+      // `${this.endpoint}/point/21.028511/105.804817/250`,
+      // 'https://opensky-network.org/api/states/all?begin=1517184000&end=1517270400',
+      // 'https://opensky-network.org/api/flights/aircraft?icao24=e88088&begin=1517184000&end=1517270400',
+      {
+        headers: {
+          Authorization: 'Basic ' + btoa('plong12112002' + ':' + 'Long12112002')
+        }
+      }
+    )
+    const data = await res.json()
+    const result = data.path.map(coor => {
+      return [coor[2], coor[1]]
+    })
+    return { coordinates: result || [], lastHeading: data.path[data.path.length - 1][4] }
+  }
+
+  async getAircraftFlight(icao24: string, unixDateBegin: number, unixDateEnd: number) {
+    const res = await fetch(
+      // 'https://opensky-network.org/api/states/all?extended=1&lamin=-85.05112900000009&lomin=-203.04088594010116&lamax=85.05112877980659&lomax=181.73644745141752',
+      // 'https://opensky-network.org/api/flights/all?begin=1517184000&end=1517270400',
+      // 'https://opensky-network.org/api/states/all',
+      // `https://opensky-network.org/api/tracks/all?icao24=${icao24}&time=${unixDate}`,
+      // `https://opensky-network.org/api/tracks/all?icao24=${icao24}&time=${unixDate}`,
+      // `https://opensky-network.org/api/states/all?lamin=${matchedAirspaceId.latMin}&lomin=${matchedAirspaceId.lonMin}&lamax=${matchedAirspaceId.latMax}&lomax=${matchedAirspaceId.lonMax}`,
+      // `${this.endpoint}/point/21.028511/105.804817/250`,
+      // 'https://opensky-network.org/api/states/all?begin=1517184000&end=1517270400',
+      `https://opensky-network.org/api/flights/aircraft?icao24=${icao24}&begin=${unixDateBegin}&end=${unixDateEnd}`,
+      {
+        headers: {
+          Authorization: 'Basic ' + btoa('plong12112002' + ':' + 'Long12112002')
+        }
+      }
+    )
+    const data = await res.json()
+    return data
+  }
+
   @Cron(CronExpression.EVERY_30_SECONDS)
   async handleCron() {
     let init = false
@@ -192,7 +236,7 @@ export class ADSBService {
       this.previouslyFetched = aircraftInAirspaces
       await aircraftInAirspaces.map(async airspace => {
         await airspace.aircraft.map(async entry => {
-          console.log('added: ', entry.icao24)
+          // console.log('added: ', entry.icao24)
           const res = await this.recordService.createEntranceRecord(
             String(airspace.id),
             entry.icao24,
@@ -209,63 +253,76 @@ export class ADSBService {
             time: entry.time_position,
             velocity: entry.velocity,
             true_track: entry.true_track,
-            coordinates: [[entry.longitude, entry.latitude]]
+            coordinates: [[entry.longitude, entry.latitude]],
+            pending: 0
           }
         })
       })
       init = true
     }
 
-    await aircraftInAirspaces.map(async (data, index) => {
-      console.log('ID: ', data.id)
-      const { entries, exits } = this.findDataDifferences(this.previouslyFetched[index].aircraft, data.aircraft)
-      await entries.map(async entry => {
-        console.log('added: ', entry.icao24)
-        const res = await this.recordService.createEntranceRecord(
-          String(data.id),
-          entry.icao24,
-          entry.callsign,
-          entry.origin_country,
-          [entry.longitude, entry.latitude]
-        )
-        this.pendingData[entry.icao24] = {
-          id: res._id,
-          airspace: data.id,
-          // icao24: entry.icao24,
-          callsign: entry.callsign,
-          origin_country: entry.origin_country,
-          time: entry.time_position,
-          velocity: entry.velocity,
-          true_track: entry.true_track,
-          coordinates: [[entry.longitude, entry.latitude]]
-        }
-      })
+    try {
+      await aircraftInAirspaces.map(async (data, index) => {
+        console.log('ID: ', data.id)
+        const { entries, exits } = this.findDataDifferences(this.previouslyFetched[index]?.aircraft, data?.aircraft)
+        await entries.map(async entry => {
+          // console.log('added: ', entry.icao24)
+          const res = await this.recordService.createEntranceRecord(
+            String(data.id),
+            entry.icao24,
+            entry.callsign,
+            entry.origin_country,
+            [entry.longitude, entry.latitude]
+          )
+          this.pendingData[entry.icao24] = {
+            id: res._id,
+            airspace: data.id,
+            // icao24: entry.icao24,
+            callsign: entry.callsign,
+            origin_country: entry.origin_country,
+            time: entry.time_position,
+            velocity: entry.velocity,
+            true_track: entry.true_track,
+            coordinates: [[entry.longitude, entry.latitude]],
+            pending: 0
+          }
+        })
 
-      exits.map(exit => {
-        console.log('removed: ', exit.icao24)
-        // Store in database
-        this.recordService.createExitRecord(
-          this.pendingData[exit.icao24].id,
-          exit.true_track,
-          this.pendingData[exit.icao24].coordinates
-        )
-        // Remove from pending data
-        this.pendingData[exit.icao24] = undefined
-      })
+        this.previouslyFetched[index].aircraft = data?.aircraft
 
-      // console.log(this.findDataDifferences(this.previouslyFetched[index].aircraft, data.aircraft))
+        exits.map(exit => {
+          // console.log('removed: ', exit.icao24)
+          if (this.pendingData[exit.icao24].pending >= 3) {
+            // Store in database
+            this.recordService.createExitRecord(
+              this.pendingData[exit.icao24].id,
+              exit.true_track,
+              this.pendingData[exit.icao24].coordinates
+            )
+            // Remove from pending data
+            this.pendingData[exit.icao24] = undefined
+          } else {
+            this.pendingData[exit.icao24].pending++
+            this.previouslyFetched[index].aircraft.push(exit)
+          }
+          console.log('aaa', this.pendingData[exit.icao24])
+        })
 
-      this.previouslyFetched[index].aircraft = data.aircraft
-      // console.log('this is fetched 2', this.previouslyFetched[index])
-      // console.log(diff2(this.previouslyFetched))
-      data.aircraft.map(flight => {
-        if (!entries.some(_data => _data.icao24 == flight.icao24) && !init) {
-          console.log('update: ', flight.icao24)
-          this.pendingData[flight.icao24].coordinates.push([flight.longitude, flight.latitude])
-        }
+        // console.log(this.findDataDifferences(this.previouslyFetched[index].aircraft, data.aircraft))
+
+        // console.log('this is fetched 2', this.previouslyFetched[index])
+        // console.log(diff2(this.previouslyFetched))
+        data.aircraft.map(flight => {
+          if (!entries.some(_data => _data.icao24 == flight.icao24) && !init) {
+            // console.log('update: ', flight.icao24)
+            this.pendingData[flight.icao24]?.coordinates.push([flight.longitude, flight.latitude])
+          }
+        })
       })
-    })
-    console.log(this.pendingData)
+    } catch (e) {
+      console.log(e)
+    }
+
     // const { entries, exits } = this.findDataDifferences(this.previouslyFetched, res)
     // await entries.map(async entry => {
     //   console.log('added: ', entry.icao24)
@@ -312,11 +369,11 @@ export class ADSBService {
   }
 
   findDataDifferences(oldData: any, newData: any): { entries: any; exits: any } {
-    const oldHexSet = new Set(oldData.map(item => item.icao24))
-    const newHexSet = new Set(newData.map(item => item.icao24))
+    const oldHexSet = new Set(oldData?.map(item => item.icao24))
+    const newHexSet = new Set(newData?.map(item => item.icao24))
 
-    const added = newData.filter(item => !oldHexSet.has(item.icao24))
-    const removed = oldData.filter(item => !newHexSet.has(item.icao24))
+    const added = newData?.filter(item => !oldHexSet.has(item.icao24))
+    const removed = oldData?.filter(item => !newHexSet.has(item.icao24))
 
     return { entries: added, exits: removed }
   }

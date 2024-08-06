@@ -5,7 +5,7 @@ import { RecordService } from './record.service'
 export class RecordController {
   constructor(private readonly recordService: RecordService) {}
   @Get('/')
-  async getRecords(@Query('airspace') airspaceId, @Query('from') from: number, @Query('to') to: number) {
+  async getRecords(@Query('airspace') airspaceId: string, @Query('from') from: number, @Query('to') to: number) {
     const records = await this.recordService.getRecords(airspaceId, Number(from), Number(to))
     return records
   }

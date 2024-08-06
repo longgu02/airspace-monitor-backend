@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, forwardRef } from '@nestjs/common'
 import { ADSBController } from './adsb.controller'
 import { ADSBService } from './adsb.service'
 import { RecordService } from 'src/record/record.service'

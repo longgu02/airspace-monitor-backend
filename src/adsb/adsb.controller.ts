@@ -25,4 +25,9 @@ export class ADSBController {
   async getAirspaceHistory(@Param('id') airspaceId: string, @Param('from') from: string) {
     return await this.adsbService.getAirspaceHistory(airspaceId, from)
   }
+
+  @Get('/route/aircraft/:icao24/:time')
+  async getAircraftRoute(@Param('icao24') aircraft: string, @Param('time') time: number) {
+    return await this.adsbService.getAircraftRoute(aircraft, time)
+  }
 }
